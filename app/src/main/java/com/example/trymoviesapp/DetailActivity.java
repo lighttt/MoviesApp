@@ -7,6 +7,7 @@ import android.widget.Toolbar;
 
 public class DetailActivity extends AppCompatActivity {
 
+    public static final String EXTRA_MOVIE = "movie";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -4,9 +4,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.trymoviesapp.data.MoviePreferences;
 import com.example.trymoviesapp.model.Movie;
@@ -20,7 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdpaterOnClickHandler {
 
     private static final String TAG = "MainActivity";
 
@@ -41,13 +43,24 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
 
         List<Movie> movies = new ArrayList<>();
-        mMovieAdapter = new MovieAdapter(movies);
+        mMovieAdapter = new MovieAdapter(movies,this);
         mRecyclerView.setAdapter(mMovieAdapter);
         loadMovieData();
     }
     private void loadMovieData() {
         String sort = MoviePreferences.getPreferredSortCriteria(this);
         new FetchMovieTask().execute(sort);
+    }
+
+    @Override
+    public void onItemClick(Movie movie) {
+        Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+        // Pass the selected Movie object through Intent
+        intent.putExtra(DetailActivity.EXTRA_MOVIE, movie);
+        // Once the Intent has been created, start the DetailActivity
+        startActivity(intent);
+
+        Toast.makeText(this, "toast:"  + movie.getId(), Toast.LENGTH_SHORT).show();
     }
 
 
