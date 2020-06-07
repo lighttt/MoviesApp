@@ -18,9 +18,15 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     /** Member variable for the list of {@link Movie}s */
     private List<Movie> mMovies;
+    private final MovieAdpaterOnClickHandler mOnClickHandler;
 
-    public MovieAdapter(List<Movie> movies) {
+    public MovieAdapter(List<Movie> movies,MovieAdpaterOnClickHandler onClickHandler) {
         mMovies = movies;
+        mOnClickHandler = onClickHandler;
+    }
+
+    public interface MovieAdpaterOnClickHandler{
+        void onItemClick(Movie movie);
     }
 
     @NonNull
@@ -67,7 +73,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     }
 
 
-    public class MovieViewHolder extends RecyclerView.ViewHolder {
+    public class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         ImageView thumbnailImageView;
         TextView titleTextView;
@@ -78,6 +84,14 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             thumbnailImageView = itemView.findViewById(R.id.iv_thumbnail);
             titleTextView = itemView.findViewById(R.id.tv_title);
             voteAvgTextView = itemView.findViewById(R.id.tv_vote_average);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            int adapterPosition = getAdapterPosition();
+            Movie movie = mMovies.get(adapterPosition);
+            mOnClickHandler.onItemClick(movie);
         }
     }
 }
