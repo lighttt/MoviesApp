@@ -1,13 +1,21 @@
 package com.example.trymoviesapp;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.trymoviesapp.data.MoviePreferences;
@@ -27,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private static final String TAG = "MainActivity";
 
     private MovieAdapter mMovieAdapter;
+    private TextView mOfflineTextView;
     private static final int GRID_SPAN_COUNT = 3;
     RecyclerView mRecyclerView;
 
@@ -35,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mRecyclerView = findViewById(R.id.rv_movie);
-
+        mOfflineTextView = findViewById(R.id.tv_offline);
 
         GridLayoutManager layoutManager = new GridLayoutManager(this, GRID_SPAN_COUNT);
         mRecyclerView.setLayoutManager(layoutManager);
@@ -43,26 +52,63 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mRecyclerView.setHasFixedSize(true);
 
         List<Movie> movies = new ArrayList<>();
-        mMovieAdapter = new MovieAdapter(movies,this);
+        mMovieAdapter = new MovieAdapter(movies, this);
         mRecyclerView.setAdapter(mMovieAdapter);
+
+        //show a dialog when there is no internet connection
+        showNetworkDialog(isOnline());
         loadMovieData();
     }
+
+    // ------------------------ Network Checking -----------------------------
+
+    private boolean isOnline() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnectedOrConnecting();
+    }
+
+    private void showNetworkDialog(final boolean isOnline) {
+        if (!isOnline) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert);
+            //set an incon
+            builder.setIcon(R.drawable.ic_warning);
+            builder.setTitle(getString(R.string.no_network_title));
+            builder.setTitle(getString(R.string.no_network_message));
+            builder.setPositiveButton(getString(R.string.go_to_settings), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    startActivityForResult(new Intent(Settings.ACTION_SETTINGS), 0);
+                }
+            });
+            builder.setNegativeButton(getString(R.string.cancel), null);
+
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
+    }
+
+
+    // ------------------------ Background Functions -----------------------------
+
+    private void showMovieDataView() {
+        mOfflineTextView.setVisibility(View.INVISIBLE);
+        mRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    private void showOfflineMessage() {
+        mRecyclerView.setVisibility(View.INVISIBLE);
+        mOfflineTextView.setVisibility(View.VISIBLE);
+    }
+
     private void loadMovieData() {
+        showMovieDataView();
         String sort = MoviePreferences.getPreferredSortCriteria(this);
         new FetchMovieTask().execute(sort);
     }
 
-    @Override
-    public void onItemClick(Movie movie) {
-        Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-        // Pass the selected Movie object through Intent
-        intent.putExtra(DetailActivity.EXTRA_MOVIE, movie);
-        // Once the Intent has been created, start the DetailActivity
-        startActivity(intent);
 
-        Toast.makeText(this, "toast:"  + movie.getId(), Toast.LENGTH_SHORT).show();
-    }
-
+    // ------------------------ ASYNC TASK -----------------------------
 
     public class FetchMovieTask extends AsyncTask<String, Void, List<Movie>> {
 
@@ -99,8 +145,24 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
             // Add the movie data
             if (movies != null && !movies.isEmpty()) {
+                showMovieDataView();
                 mMovieAdapter.addAll(movies);
             }
+            if (!isOnline()) {
+                showOfflineMessage();
+            }
         }
+    }
+
+    // ------------------------ RECYCLERVIEW -----------------------------
+    @Override
+    public void onItemClick(Movie movie) {
+        Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+        // Pass the selected Movie object through Intent
+        intent.putExtra(DetailActivity.EXTRA_MOVIE, movie);
+        // Once the Intent has been created, start the DetailActivity
+        startActivity(intent);
+
+        Toast.makeText(this, "toast:" + movie.getId(), Toast.LENGTH_SHORT).show();
     }
 }
