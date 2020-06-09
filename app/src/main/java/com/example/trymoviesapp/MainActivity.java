@@ -60,6 +60,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         loadMovieData();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadMovieData();
+    }
     // ------------------------ Network Checking -----------------------------
 
     private boolean isOnline() {
